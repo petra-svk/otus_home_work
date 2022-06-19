@@ -23,9 +23,7 @@ func Unpack(str string) (string, error) {
 	backslash := false
 	for i, r := range str {
 		switch {
-		case unicode.IsSpace(r):
-			res = append(res, r)
-		case unicode.IsLetter(r):
+		case unicode.IsLetter(r) || unicode.IsSpace(r):
 			if backslash {
 				return "", ErrInvalidString
 			}
@@ -36,27 +34,18 @@ func Unpack(str string) (string, error) {
 			if i == 0 || prevDigit {
 				return "", ErrInvalidString
 			}
-
 			if backslash {
 				backslash = false
 				res = append(res, r)
 				continue
 			}
-
 			prevDigit = true
-			x, err := strconv.Atoi(string(r))
+			q, err := strconv.Atoi(string(r))
 			if err != nil {
 				return "", ErrInvalidString
 			}
-			if x == 0 {
-				res = res[:len(res)-1]
-			} else {
-				x--
-				lastChar := res[len(res)-1]
-				for j := 0; j < x; j++ {
-					res = append(res, lastChar)
-				}
-			}
+			res = cloneRune(res, q)
+
 		case r == BackslashSymbol:
 			prevDigit = false
 			if backslash {
@@ -65,9 +54,23 @@ func Unpack(str string) (string, error) {
 			} else {
 				backslash = true
 			}
+
 		default:
 			return "", ErrInvalidString
 		}
 	}
 	return string(res), nil
+}
+
+func cloneRune(r []rune, q int) []rune {
+	if q == 0 {
+		r = r[:len(r)-1]
+	} else {
+		q--
+		lastChar := r[len(r)-1]
+		for j := 0; j < q; j++ {
+			r = append(r, lastChar)
+		}
+	}
+	return r
 }
