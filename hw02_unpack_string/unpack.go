@@ -4,19 +4,27 @@ import (
 	"errors"
 	"strconv"
 	"unicode"
+	"unicode/utf8"
 )
+
+const BackslashSymbol rune = 92
 
 var ErrInvalidString = errors.New("invalid string")
 
 func Unpack(str string) (string, error) {
-	if str == "" {
+	if len(str) == 0 {
 		return "", nil
+	}
+	if !utf8.ValidString(str) {
+		return "", ErrInvalidString
 	}
 	var res []rune
 	prevDigit := false
 	backslash := false
 	for i, r := range str {
 		switch {
+		case unicode.IsSpace(r):
+			res = append(res, r)
 		case unicode.IsLetter(r):
 			if backslash {
 				return "", ErrInvalidString
@@ -25,11 +33,7 @@ func Unpack(str string) (string, error) {
 			res = append(res, r)
 
 		case unicode.IsDigit(r):
-			if i == 0 {
-				return "", ErrInvalidString
-			}
-
-			if prevDigit {
+			if i == 0 || prevDigit {
 				return "", ErrInvalidString
 			}
 
@@ -40,7 +44,10 @@ func Unpack(str string) (string, error) {
 			}
 
 			prevDigit = true
-			x, _ := strconv.Atoi(string(r))
+			x, err := strconv.Atoi(string(r))
+			if err != nil {
+				return "", ErrInvalidString
+			}
 			if x == 0 {
 				res = res[:len(res)-1]
 			} else {
@@ -50,8 +57,7 @@ func Unpack(str string) (string, error) {
 					res = append(res, lastChar)
 				}
 			}
-
-		case r == 92: // '\' = 92
+		case r == BackslashSymbol:
 			prevDigit = false
 			if backslash {
 				backslash = false
@@ -59,11 +65,9 @@ func Unpack(str string) (string, error) {
 			} else {
 				backslash = true
 			}
-
 		default:
 			return "", ErrInvalidString
 		}
 	}
-
 	return string(res), nil
 }
