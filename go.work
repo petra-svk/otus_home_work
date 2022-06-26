@@ -1,3 +1,6 @@
 go 1.18
 
-use ./hw01_hello_otus
+use (
+	./hw01_hello_otus
+	./hw03_frequency_analysis
+)
