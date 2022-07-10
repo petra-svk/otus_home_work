@@ -39,13 +39,62 @@ func TestList(t *testing.T) {
 		require.Equal(t, 80, l.Front().Value)
 		require.Equal(t, 70, l.Back().Value)
 
-		l.MoveToFront(l.Front()) // [80, 60, 40, 10, 30, 50, 70]
-		l.MoveToFront(l.Back())  // [70, 80, 60, 40, 10, 30, 50]
+		l.MoveToFront(l.Front())     // [80, 60, 40, 10, 30, 50, 70]
+		l.MoveToFront(l.Back())      // [70, 80, 60, 40, 10, 30, 50]
+		l.MoveToFront(l.Back().Prev) // [30, 70, 80, 60, 40, 10, 50]
 
 		elems := make([]int, 0, l.Len())
 		for i := l.Front(); i != nil; i = i.Next {
 			elems = append(elems, i.Value.(int))
 		}
-		require.Equal(t, []int{70, 80, 60, 40, 10, 30, 50}, elems)
+		require.Equal(t, []int{30, 70, 80, 60, 40, 10, 50}, elems)
+	})
+
+	t.Run("check total remove", func(t *testing.T) {
+		l := NewList()
+		for _, v := range []string{"hello", "my", "world"} {
+			l.PushBack(v)
+		}
+
+		elems := make([]string, 0, l.Len())
+		for i := l.Front(); i != nil; i = i.Next {
+			elems = append(elems, i.Value.(string))
+		}
+		require.Equal(t, []string{"hello", "my", "world"}, elems)
+		l.Remove(l.Back())
+		l.Remove(l.Front())
+		l.Remove(l.Back())
+		require.Equal(t, 0, l.Len())
+		require.Nil(t, l.Front())
+		require.Nil(t, l.Back())
+	})
+
+	t.Run("move to front", func(t *testing.T) {
+		l := NewList()
+		for _, v := range []string{"hello", "my", "world"} {
+			l.PushBack(v)
+		}
+
+		l.MoveToFront(l.Front())
+		l.MoveToFront(l.Back())
+		l.MoveToFront(l.Front().Next)
+		l.MoveToFront(l.Back().Prev)
+		elems := make([]string, 0, l.Len())
+		for i := l.Front(); i != nil; i = i.Next {
+			elems = append(elems, i.Value.(string))
+		}
+		require.Equal(t, []string{"world", "hello", "my"}, elems)
+	})
+
+	t.Run("clear list", func(t *testing.T) {
+		l := NewList()
+		for _, v := range []int{20, 50, 60} {
+			l.PushFront(v)
+		}
+
+		l.Clear()
+		require.Nil(t, l.Front())
+		require.Nil(t, l.Back())
+		require.Equal(t, 0, l.Len())
 	})
 }

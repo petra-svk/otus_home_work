@@ -49,8 +49,74 @@ func TestCache(t *testing.T) {
 		require.Nil(t, val)
 	})
 
-	t.Run("purge logic", func(t *testing.T) {
-		// Write me
+	t.Run("ejection old element because of end of capacity", func(t *testing.T) {
+		c := NewCache(3)
+
+		wasInCache := c.Set("aaa", 100)
+		require.False(t, wasInCache)
+
+		wasInCache = c.Set("bbb", 200)
+		require.False(t, wasInCache)
+
+		wasInCache = c.Set("ccc", 300)
+		require.False(t, wasInCache)
+
+		wasInCache = c.Set("ddd", 400)
+		require.False(t, wasInCache)
+
+		val, ok := c.Get("aaa")
+		require.False(t, ok)
+		require.Nil(t, val)
+
+		val, ok = c.Get("bbb")
+		require.True(t, ok)
+		require.Equal(t, 200, val)
+	})
+
+	t.Run("ejection old element because of seldom use", func(t *testing.T) {
+		c := NewCache(3)
+
+		wasInCache := c.Set("aaa", 100)
+		require.False(t, wasInCache)
+
+		wasInCache = c.Set("bbb", 200)
+		require.False(t, wasInCache)
+
+		wasInCache = c.Set("ccc", 300)
+		require.False(t, wasInCache)
+
+		val, ok := c.Get("bbb")
+		require.True(t, ok)
+		require.Equal(t, 200, val)
+
+		wasInCache = c.Set("ccc", 555)
+		require.True(t, wasInCache)
+
+		val, ok = c.Get("ccc")
+		require.True(t, ok)
+		require.Equal(t, 555, val)
+
+		wasInCache = c.Set("fff", 333)
+		require.False(t, wasInCache)
+
+		val, ok = c.Get("aaa")
+		require.False(t, ok)
+		require.Nil(t, val)
+	})
+
+	t.Run("clear lru_cache", func(t *testing.T) {
+		c := NewCache(3)
+		c.Set("aaa", 100)
+		c.Set("bbb", 200)
+		c.Set("ccc", 300)
+		val, ok := c.Get("ccc")
+		require.True(t, ok)
+		require.Equal(t, 300, val)
+
+		c.Clear()
+		val, ok = c.Get("ccc")
+		require.False(t, ok)
+		require.Nil(t, val)
 	})
 }
 
